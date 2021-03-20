@@ -10,13 +10,8 @@ function GetCommandInsert(idBegin){
 
   fs.createReadStream('data.csv')
     .pipe(csv(['Product Name']))
-    .on('data', (row) => {
-      console.log(row)
-      array.push('INSERT INTO PRODUCT (EID, DESCRIPTION) VALUES (' + idBegin + ', ' + row + ')')
-      idBegin++
-    })
-
-  return array
+    .on('data', (row) => array.push('INSERT INTO PRODUCT (EID, DESCRIPTION) VALUES (' + idBegin + ', ' + row['Product Name'] + ')'))
+    .on('end', () => { return array })
 }
 
 exports.GetCommand = GetCommandInsert;

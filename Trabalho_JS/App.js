@@ -9,6 +9,3 @@ var Command = require("./InsertCsv.js")
 //Util.InsertExplicito(MyPool.getPool, Command.GetCommand(26))
 //Util.Delete(MyPool.getPool)
 //Util.InsertExplicito(MyPool.getPool, Command.GetCommand(26))
-
-for(let teste of Command.GetCommand(25))
-  console.log('Line: ' + teste)
