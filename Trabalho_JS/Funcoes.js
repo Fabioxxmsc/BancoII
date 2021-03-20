@@ -99,7 +99,46 @@ function Consulta(pool, sql, param, readOnly = true){
   }) ().catch(e => console.error(e.stack))
 }
 
+function DeleteProduct(pool){
+  (async () => {
+    const begin  = moment(new Date())
+    const client = await pool.connect()
+    const idT    = Math.floor(Math.random() * 100 + 1) + '_' + begin.millisecond()
+    let sql      = 'DELETE FROM PRODUCT P WHERE P.EID > 25'
+    let param    = []
+
+    try {
+      let res = await client.query('BEGIN')
+      console.log('\n' + res.command + ' T' + idT + '\n')      
+
+      res = await client.query(sql, param)
+      console.log('\nQuery T' + idT + ': ' + sql + '\nParam: ' + param + '\nRow Count: ' + res.rowCount + '\n')
+      for(const row of res.rows)
+        console.log(row)
+
+      res = await client.query('COMMIT')
+      console.log('\n' + res.command + ' T' + idT + '\n')
+
+      const end  = moment(new Date())
+      const diff = moment.duration(end.diff(begin)).asSeconds()
+
+      console.log('T' + idT + ' Duration ' + diff + ' second(s)\n')
+
+    } catch (e) {
+
+      res = await client.query('ROLLBACK')
+      console.log('\n' + res.command + ' T' + idT + '\nQuery: ' + sql + '\nParam: ' + param + '\n')
+
+      throw e
+    } finally {
+      client.release()
+    }
+
+  }) ().catch(e => console.error(e.stack))
+}
+
 exports.InsertImplicito = InsertImplicito;
 exports.InsertExplicito = InsertExplicito;
 exports.CausaErro       = CausaErro;
 exports.Consulta        = Consulta;
+exports.Delete          = DeleteProduct;
