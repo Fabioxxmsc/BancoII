@@ -29,10 +29,11 @@ function InsertExplicito(pool, sql){
     const begin  = moment(new Date())
     const client = await pool.connect()
     const idT    = Math.floor(Math.random() * 100 + 1) + '_' + begin.millisecond();
+    let param    = []
 
     try {
       let res = await client.query('BEGIN')
-      console.log('\n' + res.command + ' T' + idT + '\n')      
+      console.log('\n' + res.command + ' T' + idT + '\n')
 
       for (let command of sql)
         res = await client.query(command)
@@ -48,7 +49,7 @@ function InsertExplicito(pool, sql){
     } catch (e) {
 
       res = await client.query('ROLLBACK')
-      console.log('\n' + res.command + ' T' + idT + '\nQuery: ' + sql + '\nParam: ' + param + '\n')
+      console.log('\n', res.command, ' T', idT, '\nQuery: ', sql, '\nParam: ', param, '\n')
 
       throw e
     } finally {
@@ -104,7 +105,7 @@ function DeleteProduct(pool){
     const begin  = moment(new Date())
     const client = await pool.connect()
     const idT    = Math.floor(Math.random() * 100 + 1) + '_' + begin.millisecond()
-    let sql      = 'DELETE FROM PRODUCT P WHERE P.EID > 25'
+    let sql      = 'DELETE FROM PRODUCT P WHERE P.EID >= 25'
     let param    = []
 
     try {
@@ -134,7 +135,7 @@ function DeleteProduct(pool){
       client.release()
     }
 
-  }) ().catch(e => console.error(e.stack))
+  })().catch(e => console.error(e.stack))
 }
 
 exports.InsertImplicito = InsertImplicito;
