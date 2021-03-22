@@ -4,16 +4,18 @@ function InsertImplicito(pool, sql){
   (async () => {
     const begin  = moment(new Date())
     const client = await pool.connect()
-    const idT    = Math.floor(Math.random() * 100 + 1) + '_' + begin.millisecond();
+    let rowCount = 0
 
     try {
-      for (let command of sql)
+      for (let command of sql){
         res = await client.query(command)
+        rowCount += res.rowCount
+      }
 
       const end  = moment(new Date())
       const diff = moment.duration(end.diff(begin)).asSeconds()
 
-      console.log('T' + idT + ' Duration ' + diff + ' second(s)\n')
+      console.log('\nInserted ', rowCount, ', Duration ', diff, ' second(s)\n')
 
     } catch (e) {
       throw e
@@ -28,23 +30,65 @@ function InsertExplicito(pool, sql){
   (async () => {
     const begin  = moment(new Date())
     const client = await pool.connect()
-    const idT    = Math.floor(Math.random() * 100 + 1) + '_' + begin.millisecond();
+    const idT    = Math.floor(Math.random() * 100 + 1) +  '_' + begin.millisecond();
     let param    = []
+    let rowCount = 0
 
     try {
       let res = await client.query('BEGIN')
-      console.log('\n' + res.command + ' T' + idT + '\n')
+      console.log('\n', res.command, ' T', idT, '\n')
 
-      for (let command of sql)
+      for (let command of sql){
         res = await client.query(command)
+        rowCount += res.rowCount
+      }
 
       res = await client.query('COMMIT')
-      console.log('\n' + res.command + ' T' + idT + '\n')
+      console.log('\n', res.command, ' T', idT, '\n')
 
       const end  = moment(new Date())
       const diff = moment.duration(end.diff(begin)).asSeconds()
 
-      console.log('T' + idT + ' Duration ' + diff + ' second(s)\n')
+      console.log('Inserted ', rowCount, ', T', idT, ' Duration ', diff, ' second(s)\n')
+
+    } catch (e) {
+
+      res = await client.query('ROLLBACK')
+      console.log('\n', res.command, ' T', idT, '\nQuery: ', sql, '\nParam: ', param, '\n')
+
+      throw e
+    } finally {
+      client.release()
+    }
+
+  }) ().catch(e => console.error(e.stack))
+}
+
+function InsertBlock(pool, sql){
+  (async () => {
+    const begin  = moment(new Date())
+    const client = await pool.connect()
+    const idT    = Math.floor(Math.random() * 100 + 1) +  '_' + begin.millisecond();
+    let param    = []
+    let block    = `DO $$ BEGIN `
+
+    try {
+      let res = await client.query('BEGIN')
+      console.log('\n', res.command, ' T', idT, '\n')
+
+      for (let command of sql)
+        block += command
+      block += ` END $$;`
+
+      res = await client.query(block)
+
+      res = await client.query('COMMIT')
+      console.log('\n', res.command, ' T', idT, '\n')
+
+      const end  = moment(new Date())
+      const diff = moment.duration(end.diff(begin)).asSeconds()
+
+      console.log('Inserted Sucess T', idT, ' Duration ', diff, ' second(s)\n')
 
     } catch (e) {
 
@@ -72,25 +116,25 @@ function Consulta(pool, sql, param, readOnly = true){
 
     try {
       let res = await client.query(begincmd)
-      console.log('\n' + res.command + ' T' + idT + '\n')      
+      console.log('\n', res.command, ' T', idT, '\n')      
 
       res = await client.query(sql, param)
-      console.log('\nQuery T' + idT + ': ' + sql + '\nParam: ' + param + '\nRow Count: ' + res.rowCount + '\n')
+      console.log('\nQuery T', idT, ': ', sql, '\nParam: ', param, '\nRow Count: ', res.rowCount, '\n')
       for(const row of res.rows)
         console.log(row)
 
       res = await client.query('COMMIT')
-      console.log('\n' + res.command + ' T' + idT + '\n')
+      console.log('\n', res.command, ' T', idT, '\n')
 
       const end  = moment(new Date())
       const diff = moment.duration(end.diff(begin)).asSeconds()
 
-      console.log('T' + idT + ' Duration ' + diff + ' second(s)\n')
+      console.log('T', idT, ' Duration ', diff, ' second(s)\n')
 
     } catch (e) {
 
       res = await client.query('ROLLBACK')
-      console.log('\n' + res.command + ' T' + idT + '\nQuery: ' + sql + '\nParam: ' + param + '\n')
+      console.log('\n', res.command, ' T', idT, '\nQuery: ', sql, '\nParam: ', param, '\n')
 
       throw e
     } finally {
@@ -110,25 +154,25 @@ function DeleteProduct(pool){
 
     try {
       let res = await client.query('BEGIN')
-      console.log('\n' + res.command + ' T' + idT + '\n')      
+      console.log('\n', res.command, ' T', idT, '\n')      
 
       res = await client.query(sql, param)
-      console.log('\nQuery T' + idT + ': ' + sql + '\nParam: ' + param + '\nRow Count: ' + res.rowCount + '\n')
+      console.log('\nQuery T', idT, ': ', sql, '\nParam: ', param, '\nRow Count: ', res.rowCount, '\n')
       for(const row of res.rows)
         console.log(row)
 
       res = await client.query('COMMIT')
-      console.log('\n' + res.command + ' T' + idT + '\n')
+      console.log('\n', res.command, ' T', idT, '\n')
 
       const end  = moment(new Date())
       const diff = moment.duration(end.diff(begin)).asSeconds()
 
-      console.log('T' + idT + ' Duration ' + diff + ' second(s)\n')
+      console.log('T', idT, ' Duration ', diff, ' second(s)\n')
 
     } catch (e) {
 
       res = await client.query('ROLLBACK')
-      console.log('\n' + res.command + ' T' + idT + '\nQuery: ' + sql + '\nParam: ' + param + '\n')
+      console.log('\n', res.command, ' T', idT, '\nQuery: ', sql, '\nParam: ', param, '\n')
 
       throw e
     } finally {
@@ -143,3 +187,4 @@ exports.InsertExplicito = InsertExplicito;
 exports.CausaErro       = CausaErro;
 exports.Consulta        = Consulta;
 exports.Delete          = DeleteProduct;
+exports.InsertBlock     = InsertBlock
