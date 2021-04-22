@@ -12,6 +12,7 @@ columns     = []
 variaveis   = {}  
 UNDO        = []                       
 REDO        = []
+REDOIDX     = []
 UNDOcheck   = []
 REDOcheck   = []
 ListaTX     = []
@@ -114,6 +115,20 @@ try:
         
             if not len(UNDO):
                 break
+
+    REDOIDX = REDO.copy() # Posicionar o índice a partir do start das transações de Redo
+    for i in range(len(arquivolist) - 1, 0, -1): 
+        if not len(REDOIDX):
+            break
+
+        linha = arquivolist[i]
+
+        if start.search(linha) and (not startckpt.search(linha)):
+            Tx = extracT.findall(linha)[0]
+
+            if Tx in REDOIDX:
+                REDOIDX.remove(Tx)
+
 
     # Percorre o log em forward a partir do ponto
     # de parada do UNDO(Ignoradas), aplicando o REDO de acordo com a lista 
